@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gourmet Bites - Fresh Fast Food</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- User Website -->
+    <div class="user-site">
+        <!-- Header with dynamic colors -->
+        <header class="site-header" id="siteHeader">
+            <div class="container">
+                <div class="header-content">
+                    <h1 class="restaurant-name" id="restaurantName">Gourmet Bites</h1>
+                    <div class="header-actions">
+                        <button class="icon-btn" onclick="toggleContactModal()" title="Contact Us">
+                            <i class="fas fa-envelope"></i>
+                        </button>
+                        <button class="icon-btn cart-btn" onclick="toggleCart()">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span class="cart-count" id="cartCount">0</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container">
+                <h2>Delicious Food Delivered to Your Door</h2>
+                <p>Fresh ingredients, quick preparation, cash on delivery</p>
+            </div>
+        </section>
+
+        <!-- Menu Section -->
+        <section class="menu-section">
+            <div class="container">
+                <h2 class="section-title">Our Menu</h2>
+                <div class="menu-grid" id="menuGrid">
+                    <!-- Menu items will be dynamically loaded here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Cart Sidebar -->
+        <div class="cart-sidebar" id="cartSidebar">
+            <div class="cart-header">
+                <h3>Your Cart</h3>
+                <button class="close-btn" onclick="toggleCart()">&times;</button>
+            </div>
+            <div class="cart-items" id="cartItems">
+                <!-- Cart items will be dynamically loaded here -->
+            </div>
+            <div class="cart-footer">
+                <div class="cart-total">
+                    <span>Total:</span>
+                    <span id="cartTotal">$0.00</span>
+                </div>
+                <button class="checkout-btn" onclick="showCheckout()" id="checkoutBtn" disabled>Proceed to Checkout</button>
+            </div>
+        </div>
+
+        <!-- Checkout Modal -->
+        <div class="modal" id="checkoutModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Checkout</h3>
+                    <button class="close-btn" onclick="closeCheckout()">&times;</button>
+                </div>
+                <form id="checkoutForm" onsubmit="placeOrder(event)">
+                    <div class="form-group">
+                        <label for="name">Full Name *</label>
+                        <input type="text" id="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number *</label>
+                        <input type="tel" id="phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="address">Delivery Address *</label>
+                        <textarea id="address" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Payment Method</label>
+                        <div class="payment-method">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Cash on Delivery</span>
+                        </div>
+                    </div>
+                    <div class="order-summary" id="orderSummary">
+                        <!-- Order summary will be displayed here -->
+                    </div>
+                    <button type="submit" class="place-order-btn">Place Order</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Contact Modal -->
+        <div class="modal" id="contactModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Contact Us</h3>
+                    <button class="close-btn" onclick="toggleContactModal()">&times;</button>
+                </div>
+                <form id="contactForm" onsubmit="sendWhatsAppMessage(event)">
+                    <div class="form-group">
+                        <label for="contactName">Your Name *</label>
+                        <input type="text" id="contactName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactEmail">Email *</label>
+                        <input type="email" id="contactEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactMessage">Message *</label>
+                        <textarea id="contactMessage" rows="4" required></textarea>
+                    </div>
+                    <button type="submit" class="whatsapp-btn">
+                        <i class="fab fa-whatsapp"></i>
+                        Send via WhatsApp
+                    </button>
+                </form>
+                <div class="contact-info" id="contactInfo">
+                    <!-- Contact info will be dynamically loaded -->
+                </div>
+            </div>
+        </div>
+
+        <!-- WhatsApp Floating Button -->
+        <a href="#" class="whatsapp-float" id="whatsappFloat" target="_blank">
+            <i class="fab fa-whatsapp"></i>
+        </a>
+
+        <!-- Toast Notification -->
+        <div class="toast" id="toast"></div>
+    </div>
+
+    <script>
+        // ==================== STATE MANAGEMENT ====================
+        let menuItems = [];
+        let cart = [];
+        let orders = [];
+        let settings = {
+            name: 'Gourmet Bites',
+            primaryColor: '#e67e22',
+            secondaryColor: '#34495e',
+            phone: '+1234567890',
+            whatsapp: '1234567890',
+            address: '123 Food Street, City',
+            email: 'contact@gourmetbites.com',
+            logo: ''
+        };
+
+        // Load data from localStorage
+        function loadData() {
+            const savedMenu = localStorage.getItem('menuItems');
+            const savedOrders = localStorage.getItem('orders');
+            const savedSettings = localStorage.getItem('settings');
+            const savedCart = localStorage.getItem('cart');
+
+            if (savedMenu) menuItems = JSON.parse(savedMenu);
+            if (savedOrders) orders = JSON.parse(savedOrders);
+            if (savedSettings) settings = JSON.parse(savedSettings);
+            if (savedCart) cart = JSON.parse(savedCart);
+
+            applySettings();
+            renderMenu();
+            updateCartDisplay();
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('menuItems', JSON.stringify(menuItems));
+            localStorage.setItem('orders', JSON.stringify(orders));
+            localStorage.setItem('settings', JSON.stringify(settings));
+        }
+
+        // ==================== SETTINGS ====================
+        function applySettings() {
+            document.getElementById('restaurantName').textContent = settings.name;
+            document.documentElement.style.setProperty('--primary-color', settings.primaryColor);
+            document.documentElement.style.setProperty('--secondary-color', settings.secondaryColor);
+            
+            const whatsappFloat = document.getElementById('whatsappFloat');
+            whatsappFloat.href = `https://wa.me/${settings.whatsapp}`;
+            
+            const contactInfo = document.getElementById('contactInfo');
+            contactInfo.innerHTML = `
+                <p><i class="fas fa-phone"></i> ${settings.phone}</p>
+                <p><i class="fas fa-envelope"></i> ${settings.email}</p>
+                <p><i class="fas fa-map-marker-alt"></i> ${settings.address}</p>
+            `;
+        }
+
+        // ==================== MENU FUNCTIONS ====================
+        function renderMenu() {
+            const menuGrid = document.getElementById('menuGrid');
+            if (menuItems.length === 0) {
+                menuGrid.innerHTML = '<p class="no-items">No menu items available</p>';
+                return;
+            }
+
+            menuGrid.innerHTML = menuItems.map(item => `
+                <div class="menu-card">
+                    <img src="${item.image || 'https://via.placeholder.com/300x200?text=Food'}" alt="${item.name}">
+                    <div class="menu-card-content">
+                        <h3>${item.name}</h3>
+                        <p>${item.description}</p>
+                        <div class="menu-card-footer">
+                            <span class="price">$${item.price.toFixed(2)}</span>
+                            <button class="add-to-cart-btn" onclick="addToCart('${item.id}')">
+                                <i class="fas fa-cart-plus"></i> Add
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ==================== CART FUNCTIONS ====================
+        function addToCart(itemId) {
+            const item = menuItems.find(i => i.id === itemId);
+            const existingItem = cart.find(i => i.id === itemId);
+
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({ ...item, quantity: 1 });
+            }
+
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartDisplay();
+            showToast('Item added to cart!', 'success');
+        }
+
+        function removeFromCart(itemId) {
+            cart = cart.filter(i => i.id !== itemId);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartDisplay();
+            showToast('Item removed from cart', 'info');
+        }
+
+        function updateQuantity(itemId, change) {
+            const item = cart.find(i => i.id === itemId);
+            if (item) {
+                item.quantity += change;
+                if (item.quantity <= 0) {
+                    removeFromCart(itemId);
+                } else {
+                    localStorage.setItem('cart', JSON.stringify(cart));
+                    updateCartDisplay();
+                }
+            }
+        }
+
+        function updateCartDisplay() {
+            const cartItems = document.getElementById('cartItems');
+            const cartCount = document.getElementById('cartCount');
+            const cartTotal = document.getElementById('cartTotal');
+            const checkoutBtn = document.getElementById('checkoutBtn');
+
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            cartCount.textContent = totalItems;
+
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<p class="empty-cart">Your cart is empty</p>';
+                cartTotal.textContent = '$0.00';
+                checkoutBtn.disabled = true;
+                return;
+            }
+
+            checkoutBtn.disabled = false;
+            let total = 0;
+
+            cartItems.innerHTML = cart.map(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                return `
+                    <div class="cart-item">
+                        <img src="${item.image || 'https://via.placeholder.com/50x50'}" alt="${item.name}">
+                        <div class="cart-item-details">
+                            <h4>${item.name}</h4>
+                            <p>$${item.price.toFixed(2)}</p>
+                        </div>
+                        <div class="cart-item-quantity">
+                            <button onclick="updateQuantity('${item.id}', -1)">-</button>
+                            <span>${item.quantity}</span>
+                            <button onclick="updateQuantity('${item.id}', 1)">+</button>
+                        </div>
+                        <button class="remove-item" onclick="removeFromCart('${item.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
+            cartTotal.textContent = `$${total.toFixed(2)}`;
+        }
+
+        // ==================== ORDER FUNCTIONS ====================
+        function showCheckout() {
+            if (cart.length === 0) return;
+            
+            const orderSummary = document.getElementById('orderSummary');
+            let total = 0;
+            let itemsHtml = '<h4>Order Summary</h4>';
+            
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                itemsHtml += `
+                    <div class="summary-item">
+                        <span>${item.name} x${item.quantity}</span>
+                        <span>$${itemTotal.toFixed(2)}</span>
+                    </div>
+                `;
+            });
+            
+            itemsHtml += `<div class="summary-total"><strong>Total:</strong> $${total.toFixed(2)}</div>`;
+            orderSummary.innerHTML = itemsHtml;
+            
+            document.getElementById('checkoutModal').style.display = 'flex';
+        }
+
+        function closeCheckout() {
+            document.getElementById('checkoutModal').style.display = 'none';
+        }
+
+        function placeOrder(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+            const address = document.getElementById('address').value;
+
+            if (!name || !phone || !address) {
+                showToast('Please fill all fields', 'error');
+                return;
+            }
+
+            const order = {
+                id: Date.now().toString(),
+                customer: { name, phone, address },
+                items: [...cart],
+                total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+                status: 'pending',
+                date: new Date().toISOString()
+            };
+
+            orders.push(order);
+            localStorage.setItem('orders', JSON.stringify(orders));
+            
+            // Clear cart
+            cart = [];
+            localStorage.setItem('cart', JSON.stringify(cart));
+            
+            updateCartDisplay();
+            closeCheckout();
+            document.getElementById('checkoutForm').reset();
+            
+            showToast('Order placed successfully!', 'success');
+        }
+
+        // ==================== CONTACT FUNCTIONS ====================
+        function toggleContactModal() {
+            const modal = document.getElementById('contactModal');
+            modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        function sendWhatsAppMessage(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('contactName').value;
+            const email = document.getElementById('contactEmail').value;
+            const message = document.getElementById('contactMessage').value;
+
+            if (!name || !email || !message) {
+                showToast('Please fill all fields', 'error');
+                return;
+            }
+
+            const whatsappMessage = `Name: ${name}%0AEmail: ${email}%0AMessage: ${message}`;
+            window.open(`https://wa.me/${settings.whatsapp}?text=${whatsappMessage}`, '_blank');
+            
+            toggleContactModal();
+            document.getElementById('contactForm').reset();
+            showToast('Message sent via WhatsApp!', 'success');
+        }
+
+        // ==================== UTILITY FUNCTIONS ====================
+        function toggleCart() {
+            const sidebar = document.getElementById('cartSidebar');
+            sidebar.classList.toggle('active');
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.style.display = 'block';
+            
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        // Initialize with sample data if empty
+        function initializeSampleData() {
+            if (menuItems.length === 0) {
+                menuItems = [
+                    {
+                        id: '1',
+                        name: 'Classic Burger',
+                        description: 'Beef patty, lettuce, tomato, cheese, special sauce',
+                        price: 8.99,
+                        image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300'
+                    },
+                    {
+                        id: '2',
+                        name: 'Margherita Pizza',
+                        description: 'Fresh tomatoes, mozzarella, basil, olive oil',
+                        price: 12.99,
+                        image: 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=300'
+                    },
+                    {
+                        id: '3',
+                        name: 'Chicken Wings',
+                        description: 'Spicy buffalo wings with ranch dressing',
+                        price: 10.99,
+                        image: 'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=300'
+                    }
+                ];
+                saveData();
+            }
+        }
+
+        // Check for updates from admin
+        function checkForUpdates() {
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'menuItems') {
+                    menuItems = JSON.parse(e.newValue);
+                    renderMenu();
+                }
+                if (e.key === 'settings') {
+                    settings = JSON.parse(e.newValue);
+                    applySettings();
+                }
+                if (e.key === 'orders' && e.newValue) {
+                    orders = JSON.parse(e.newValue);
+                }
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            initializeSampleData();
+            checkForUpdates();
+            
+            // Close modals when clicking outside
+            window.onclick = function(event) {
+                const checkoutModal = document.getElementById('checkoutModal');
+                const contactModal = document.getElementById('contactModal');
+                const cartSidebar = document.getElementById('cartSidebar');
+                
+                if (event.target === checkoutModal) {
+                    closeCheckout();
+                }
+                if (event.target === contactModal) {
+                    toggleContactModal();
+                }
+                if (!event.target.closest('.cart-sidebar') && !event.target.closest('.cart-btn')) {
+                    cartSidebar.classList.remove('active');
+                }
+            };
+        });
+    </script>
+</body>
+</html>

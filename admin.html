@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Restaurant Management</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Admin Panel -->
+    <div class="admin-panel" id="adminPanel">
+        <!-- Login Screen -->
+        <div class="login-screen" id="loginScreen">
+            <div class="login-container">
+                <h2><i class="fas fa-lock"></i> Admin Login</h2>
+                <form id="loginForm" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" value="admin" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" value="admin123" required>
+                    </div>
+                    <button type="submit" class="login-btn">Login</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Dashboard (hidden until login) -->
+        <div class="dashboard" id="dashboard" style="display: none;">
+            <!-- Header -->
+            <header class="admin-header">
+                <div class="container">
+                    <div class="header-content">
+                        <h1><i class="fas fa-utensils"></i> Restaurant Admin</h1>
+                        <div class="admin-actions">
+                            <span id="adminStatus" class="status-badge">Logged in as admin</span>
+                            <button class="logout-btn" onclick="handleLogout()">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Tabs -->
+            <div class="dashboard-tabs">
+                <div class="container">
+                    <div class="tabs">
+                        <button class="tab-btn active" onclick="switchTab('menu')">
+                            <i class="fas fa-utensils"></i> Menu
+                        </button>
+                        <button class="tab-btn" onclick="switchTab('orders')">
+                            <i class="fas fa-shopping-bag"></i> Orders
+                            <span class="badge" id="pendingOrdersCount">0</span>
+                        </button>
+                        <button class="tab-btn" onclick="switchTab('settings')">
+                            <i class="fas fa-cog"></i> Settings
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Menu Management Tab -->
+            <div class="tab-content active" id="menuTab">
+                <div class="container">
+                    <div class="admin-grid">
+                        <!-- Add/Edit Menu Form -->
+                        <div class="admin-card">
+                            <h3><i class="fas fa-plus-circle"></i> Add Menu Item</h3>
+                            <form id="menuForm" onsubmit="handleMenuItemSubmit(event)">
+                                <input type="hidden" id="editingItemId">
+                                <div class="form-group">
+                                    <label for="itemName">Item Name</label>
+                                    <input type="text" id="itemName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="itemDescription">Description</label>
+                                    <textarea id="itemDescription" rows="3" required></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="itemPrice">Price ($)</label>
+                                    <input type="number" id="itemPrice" step="0.01" min="0" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="itemImage">Image URL</label>
+                                    <input type="url" id="itemImage" placeholder="https://...">
+                                    <small>Leave empty for placeholder image</small>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn-primary" id="submitBtn">Add Item</button>
+                                    <button type="button" class="btn-secondary" onclick="cancelEdit()" style="display: none;" id="cancelBtn">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Menu Items List -->
+                        <div class="admin-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-list"></i> Current Menu</h3>
+                                <button class="btn-danger btn-sm" onclick="deleteAllMenu()">Delete All</button>
+                            </div>
+                            <div class="items-list" id="menuList">
+                                <!-- Menu items will be dynamically loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Management Tab -->
+            <div class="tab-content" id="ordersTab">
+                <div class="container">
+                    <div class="admin-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-shopping-bag"></i> Orders</h3>
+                            <button class="btn-danger btn-sm" onclick="deleteAllOrders()">Delete All</button>
+                        </div>
+                        <div class="orders-list" id="ordersList">
+                            <!-- Orders will be dynamically loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-content" id="settingsTab">
+                <div class="container">
+                    <div class="admin-card">
+                        <h3><i class="fas fa-sliders-h"></i> Restaurant Settings</h3>
+                        <form id="settingsForm" onsubmit="handleSettingsSubmit(event)">
+                            <div class="settings-grid">
+                                <div class="form-group">
+                                    <label for="restaurantName">Restaurant Name</label>
+                                    <input type="text" id="restaurantName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="primaryColor">Primary Color</label>
+                                    <input type="color" id="primaryColor" value="#e67e22">
+                                </div>
+                                <div class="form-group">
+                                    <label for="secondaryColor">Secondary Color</label>
+                                    <input type="color" id="secondaryColor" value="#34495e">
+                                </div>
+                                <div class="form-group">
+                                    <label for="phone">Phone Number</label>
+                                    <input type="tel" id="phone">
+                                </div>
+                                <div class="form-group">
+                                    <label for="whatsapp">WhatsApp Number</label>
+                                    <input type="text" id="whatsapp">
+                                </div>
+                                <div class="form-group">
+                                    <label for="email">Email</label>
+                                    <input type="email" id="email">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label for="address">Address</label>
+                                    <textarea id="address" rows="2"></textarea>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary">Save Settings</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== AUTHENTICATION ====================
+        let isAuthenticated = false;
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (username === 'admin' && password === 'admin123') {
+                isAuthenticated = true;
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                loadAdminData();
+                startRealTimeUpdates();
+            } else {
+                alert('Invalid credentials! Use admin/admin123');
+            }
+        }
+
+        function handleLogout() {
+            isAuthenticated = false;
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('dashboard').style.display = 'none';
+        }
+
+        // ==================== DATA MANAGEMENT ====================
+        let menuItems = [];
+        let orders = [];
+        let settings = {};
+
+        function loadAdminData() {
+            // Load from localStorage
+            const savedMenu = localStorage.getItem('menuItems');
+            const savedOrders = localStorage.getItem('orders');
+            const savedSettings = localStorage.getItem('settings');
+
+            if (savedMenu) menuItems = JSON.parse(savedMenu);
+            if (savedOrders) orders = JSON.parse(savedOrders);
+            if (savedSettings) settings = JSON.parse(savedSettings);
+
+            renderMenuList();
+            renderOrdersList();
+            renderSettingsForm();
+            updatePendingCount();
+        }
+
+        // ==================== MENU MANAGEMENT ====================
+        function renderMenuList() {
+            const menuList = document.getElementById('menuList');
+            
+            if (menuItems.length === 0) {
+                menuList.innerHTML = '<p class="no-items">No menu items yet</p>';
+                return;
+            }
+
+            menuList.innerHTML = menuItems.map(item => `
+                <div class="list-item">
+                    <img src="${item.image || 'https://via.placeholder.com/50x50'}" alt="${item.name}">
+                    <div class="item-info">
+                        <h4>${item.name}</h4>
+                        <p>${item.description.substring(0, 50)}${item.description.length > 50 ? '...' : ''}</p>
+                        <span class="price">$${item.price.toFixed(2)}</span>
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn-edit" onclick="editMenuItem('${item.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-delete" onclick="deleteMenuItem('${item.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function handleMenuItemSubmit(event) {
+            event.preventDefault();
+
+            const itemId = document.getElementById('editingItemId').value;
+            const name = document.getElementById('itemName').value;
+            const description = document.getElementById('itemDescription').value;
+            const price = parseFloat(document.getElementById('itemPrice').value);
+            const image = document.getElementById('itemImage').value;
+
+            if (!name || !description || !price) {
+                alert('Please fill all required fields');
+                return;
+            }
+
+            if (itemId) {
+                // Update existing item
+                const index = menuItems.findIndex(i => i.id === itemId);
+                if (index !== -1) {
+                    menuItems[index] = {
+                        ...menuItems[index],
+                        name,
+                        description,
+                        price,
+                        image: image || menuItems[index].image
+                    };
+                }
+            } else {
+                // Add new item
+                const newItem = {
+                    id: Date.now().toString(),
+                    name,
+                    description,
+                    price,
+                    image: image || ''
+                };
+                menuItems.push(newItem);
+            }
+
+            // Save and update
+            localStorage.setItem('menuItems', JSON.stringify(menuItems));
+            renderMenuList();
+            resetMenuForm();
+            
+            // Trigger update in user website
+            window.localStorage.setItem('menuItems', JSON.stringify(menuItems));
+        }
+
+        function editMenuItem(itemId) {
+            const item = menuItems.find(i => i.id === itemId);
+            if (item) {
+                document.getElementById('editingItemId').value = item.id;
+                document.getElementById('itemName').value = item.name;
+                document.getElementById('itemDescription').value = item.description;
+                document.getElementById('itemPrice').value = item.price;
+                document.getElementById('itemImage').value = item.image || '';
+                
+                document.getElementById('submitBtn').textContent = 'Update Item';
+                document.getElementById('cancelBtn').style.display = 'inline-block';
+            }
+        }
+
+        function cancelEdit() {
+            resetMenuForm();
+        }
+
+        function resetMenuForm() {
+            document.getElementById('editingItemId').value = '';
+            document.getElementById('menuForm').reset();
+            document.getElementById('submitBtn').textContent = 'Add Item';
+            document.getElementById('cancelBtn').style.display = 'none';
+        }
+
+        function deleteMenuItem(itemId) {
+            if (confirm('Are you sure you want to delete this item?')) {
+                menuItems = menuItems.filter(i => i.id !== itemId);
+                localStorage.setItem('menuItems', JSON.stringify(menuItems));
+                renderMenuList();
+                window.localStorage.setItem('menuItems', JSON.stringify(menuItems));
+            }
+        }
+
+        function deleteAllMenu() {
+            if (confirm('Are you sure you want to delete ALL menu items? This cannot be undone.')) {
+                menuItems = [];
+                localStorage.setItem('menuItems', JSON.stringify(menuItems));
+                renderMenuList();
+                window.localStorage.setItem('menuItems', JSON.stringify(menuItems));
+            }
+        }
+
+        // ==================== ORDERS MANAGEMENT ====================
+        function renderOrdersList() {
+            const ordersList = document.getElementById('ordersList');
+            
+            if (orders.length === 0) {
+                ordersList.innerHTML = '<p class="no-items">No orders yet</p>';
+                return;
+            }
+
+            // Sort orders by date (newest first)
+            const sortedOrders = [...orders].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            ordersList.innerHTML = sortedOrders.map(order => `
+                <div class="order-card ${order.status}">
+                    <div class="order-header">
+                        <div>
+                            <h4>Order #${order.id.slice(-6)}</h4>
+                            <span class="order-date">${new Date(order.date).toLocaleString()}</span>
+                        </div>
+                        <span class="order-status ${order.status}">${order.status}</span>
+                    </div>
+                    <div class="order-customer">
+                        <p><i class="fas fa-user"></i> ${order.customer.name}</p>
+                        <p><i class="fas fa-phone"></i> ${order.customer.phone}</p>
+                        <p><i class="fas fa-map-marker-alt"></i> ${order.customer.address}</p>
+                    </div>
+                    <div class="order-items">
+                        <h5>Items:</h5>
+                        ${order.items.map(item => `
+                            <div class="order-item">
+                                <span>${item.name} x${item.quantity}</span>
+                                <span>$${(item.price * item.quantity).toFixed(2)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="order-footer">
+                        <div class="order-total">
+                            <strong>Total:</strong> $${order.total.toFixed(2)}
+                        </div>
+                        <div class="order-actions">
+                            ${order.status === 'pending' ? `
+                                <button class="btn-success btn-sm" onclick="markOrderCompleted('${order.id}')">
+                                    <i class="fas fa-check"></i> Complete
+                                </button>
+                            ` : ''}
+                            <button class="btn-danger btn-sm" onclick="deleteOrder('${order.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            updatePendingCount();
+        }
+
+        function markOrderCompleted(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                order.status = 'completed';
+                localStorage.setItem('orders', JSON.stringify(orders));
+                renderOrdersList();
+                window.localStorage.setItem('orders', JSON.stringify(orders));
+            }
+        }
+
+        function deleteOrder(orderId) {
+            if (confirm('Delete this order?')) {
+                orders = orders.filter(o => o.id !== orderId);
+                localStorage.setItem('orders', JSON.stringify(orders));
+                renderOrdersList();
+                window.localStorage.setItem('orders', JSON.stringify(orders));
+            }
+        }
+
+        function deleteAllOrders() {
+            if (confirm('Are you sure you want to delete ALL orders? This cannot be undone.')) {
+                orders = [];
+                localStorage.setItem('orders', JSON.stringify(orders));
+                renderOrdersList();
+                window.localStorage.setItem('orders', JSON.stringify(orders));
+            }
+        }
+
+        function updatePendingCount() {
+            const pendingCount = orders.filter(o => o.status === 'pending').length;
+            document.getElementById('pendingOrdersCount').textContent = pendingCount;
+        }
+
+        // ==================== SETTINGS MANAGEMENT ====================
+        function renderSettingsForm() {
+            document.getElementById('restaurantName').value = settings.name || 'Gourmet Bites';
+            document.getElementById('primaryColor').value = settings.primaryColor || '#e67e22';
+            document.getElementById('secondaryColor').value = settings.secondaryColor || '#34495e';
+            document.getElementById('phone').value = settings.phone || '';
+            document.getElementById('whatsapp').value = settings.whatsapp || '';
+            document.getElementById('email').value = settings.email || '';
+            document.getElementById('address').value = settings.address || '';
+        }
+
+        function handleSettingsSubmit(event) {
+            event.preventDefault();
+
+            settings = {
+                name: document.getElementById('restaurantName').value,
+                primaryColor: document.getElementById('primaryColor').value,
+                secondaryColor: document.getElementById('secondaryColor').value,
+                phone: document.getElementById('phone').value,
+                whatsapp: document.getElementById('whatsapp').value,
+                email: document.getElementById('email').value,
+                address: document.getElementById('address').value
+            };
+
+            localStorage.setItem('settings', JSON.stringify(settings));
+            window.localStorage.setItem('settings', JSON.stringify(settings));
+            alert('Settings saved successfully!');
+        }
+
+        // ==================== UI FUNCTIONS ====================
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.tab-btn').classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(`${tabName}Tab`).classList.add('active');
+        }
+
+        // ==================== REAL-TIME UPDATES ====================
+        function startRealTimeUpdates() {
+            // Listen for changes from user website or other tabs
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'menuItems' && e.newValue) {
+                    menuItems = JSON.parse(e.newValue);
+                    renderMenuList();
+                }
+                if (e.key === 'orders' && e.newValue) {
+                    orders = JSON.parse(e.newValue);
+                    renderOrdersList();
+                }
+                if (e.key === 'settings' && e.newValue) {
+                    settings = JSON.parse(e.newValue);
+                    renderSettingsForm();
+                }
+            });
+
+            // Check for updates every second (for cross-tab communication)
+            setInterval(() => {
+                const currentMenu = localStorage.getItem('menuItems');
+                const currentOrders = localStorage.getItem('orders');
+                const currentSettings = localStorage.getItem('settings');
+
+                if (currentMenu && JSON.stringify(menuItems) !== currentMenu) {
+                    menuItems = JSON.parse(currentMenu);
+                    renderMenuList();
+                }
+                if (currentOrders && JSON.stringify(orders) !== currentOrders) {
+                    orders = JSON.parse(currentOrders);
+                    renderOrdersList();
+                }
+                if (currentSettings && JSON.stringify(settings) !== currentSettings) {
+                    settings = JSON.parse(currentSettings);
+                    renderSettingsForm();
+                }
+            }, 1000);
+        }
+
+        // Check if already logged in from session
+        if (sessionStorage.getItem('adminLoggedIn') === 'true') {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            loadAdminData();
+            startRealTimeUpdates();
+        }
+
+        // Save login state
+        function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (username === 'admin' && password === 'admin123') {
+                isAuthenticated = true;
+                sessionStorage.setItem('adminLoggedIn', 'true');
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                loadAdminData();
+                startRealTimeUpdates();
+            } else {
+                alert('Invalid credentials! Use admin/admin123');
+            }
+        }
+
+        function handleLogout() {
+            isAuthenticated = false;
+            sessionStorage.removeItem('adminLoggedIn');
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('dashboard').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
